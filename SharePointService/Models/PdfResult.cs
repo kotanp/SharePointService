@@ -9,6 +9,6 @@ namespace SharePointService.Models
     public class PdfResult
     {
         [JsonProperty(PropertyName = "pdfBytes")]
-        public int[] pdfBytes { get; set; }
+        public string pdfBytes { get; set; }
     }
 }

@@ -96,7 +96,7 @@ namespace SharePointService.Controllers
             }
             var intArray = byteArray.Select(b => (int)b).ToArray();
             PdfResult result = new PdfResult();
-            result.pdfBytes = intArray;
+            result.pdfBytes = String.Join(" ", intArray);
             var json = JsonConvert.SerializeObject(result);
             return Content(json, "application/json");
         }
