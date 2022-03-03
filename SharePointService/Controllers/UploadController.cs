@@ -51,7 +51,7 @@ namespace SharePointService.Controllers
             byte[] byteArray;
             using (var stream = new MemoryStream())
             {
-                Request.Body.CopyToAsync(stream);
+                Request.Body.CopyToAsync(stream).GetAwaiter().GetResult();
                 byteArray = stream.ToArray();
             }
             CreateFolder(client, siteId, _logger, strucutre[3]).Wait(TimeSpan.FromSeconds(1));
