@@ -19,24 +19,26 @@ namespace SharePointService.Controllers
     {
         private readonly Settings _settings;
         private readonly ILogger _logger;
+        private GraphServiceClient client;
         //private FolderStructure _folderstructure;
         //private DataModel data;
         public UploadController(IOptions<Settings> options, ILoggerFactory logFactory)
         {
             _settings = options.Value;
             _logger = logFactory.CreateLogger<UploadController>();
+            client = GraphClient(_settings.ClientId, _settings.ClientSecret, new[] { _settings.Scopes }, _settings.BaseUrl, _settings.TokenEndPoint);
         }
         [HttpPost]
         public IActionResult Index(string originalFileName, string filePath, string uuid)
         {
-            string baseUrl = _settings.BaseUrl;
-            var clientId = _settings.ClientId;
-            var clientSecret = _settings.ClientSecret;
-            var scopes = new[] { _settings.Scopes };
-            string settingsPath = _settings.FilePath;
-            string tokenEndpoint = _settings.TokenEndPoint;
+            // string baseUrl = _settings.BaseUrl;
+            // var clientId = _settings.ClientId;
+            // var clientSecret = _settings.ClientSecret;
+            // var scopes = new[] { _settings.Scopes };
+            // string settingsPath = _settings.FilePath;
+            // string tokenEndpoint = _settings.TokenEndPoint;
             string siteUrl = _settings.SiteUrl;
-            GraphServiceClient client = GraphClient(clientId, clientSecret, scopes, baseUrl, tokenEndpoint);
+            // GraphServiceClient client = GraphClient(clientId, clientSecret, scopes, baseUrl, tokenEndpoint);
             var idCollection = client.Sites.Request().GetAsync().GetAwaiter().GetResult();
             var siteId = idCollection.Where(x => x.WebUrl == siteUrl).FirstOrDefault().Id;
             string[] strucutre = filePath.Split('/');
@@ -49,7 +51,7 @@ namespace SharePointService.Controllers
             byte[] byteArray;
             using (var stream = new MemoryStream())
             {
-                Request.Body.CopyToAsync(stream);
+                Request.Body.CopyToAsync(stream).GetAwaiter().GetResult();
                 byteArray = stream.ToArray();
             }
             CreateFolder(client, siteId, _logger, strucutre[3]).Wait(TimeSpan.FromSeconds(1));
@@ -71,15 +73,32 @@ namespace SharePointService.Controllers
         [HttpDelete]
         public IActionResult Delete(string fileFullUrl)
         {
-            string baseUrl = _settings.BaseUrl;
-            var clientId = _settings.ClientId;
-            var clientSecret = _settings.ClientSecret;
-            var scopes = new[] { _settings.Scopes };
-            string tokenEndpoint = _settings.TokenEndPoint;
-            GraphServiceClient client = GraphClient(clientId, clientSecret, scopes, baseUrl, tokenEndpoint);
             var sharedItemId = UrlToSharingToken(fileFullUrl);
             client.Shares[sharedItemId].DriveItem.Request().DeleteAsync();
             return Content("OK");
+        }
+
+        [HttpGet]
+        public IActionResult ConvertToPdf(string fileFullUrl)
+        {
+            var sharedItemId = UrlToSharingToken(fileFullUrl);
+            var queryOptions = new List<QueryOption>()
+                    {
+                        new QueryOption("format", "pdf")
+                    };
+
+            Stream driveItem = client.Shares[sharedItemId].DriveItem.Content.Request(queryOptions).GetAsync().GetAwaiter().GetResult();
+            byte[] byteArray;
+            using (var memoryStream = new MemoryStream())
+            {
+                driveItem.CopyTo(memoryStream);
+                byteArray = memoryStream.ToArray();
+            }
+            var intArray = byteArray.Select(b => (int)b).ToArray();
+            PdfResult result = new PdfResult();
+            result.pdfBytes = String.Join(" ", intArray);
+            var json = JsonConvert.SerializeObject(result);
+            return Content(json, "application/json");
         }
 
         public static string columnDefinition(GraphServiceClient client, string fileFullUrl)

@@ -56,9 +56,13 @@ namespace SharePointService
                     pattern: "sharepoint/delete",
                     defaults: new { controller = "Upload", action = "Delete" });
                 endpoints.MapControllerRoute(
-                    name: "pdfconvert",
+                    name: "sharepointconvert",
                     pattern: "sharepoint/convert",
-                    defaults: new { controller = "PdfConverter", action = "Index" });
+                    defaults: new { controller = "Upload", action = "ConvertToPdf" });
+                // endpoints.MapControllerRoute(
+                //     name: "pdfconvert",
+                //     pattern: "sharepoint/convert",
+                //     defaults: new { controller = "PdfConverter", action = "Index" });
             });
         }
     }
