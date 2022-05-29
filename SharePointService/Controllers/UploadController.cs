@@ -11,19 +11,22 @@ using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using Newtonsoft.Json;
-using System.Diagnostics;
+using SharePointService.Service;
 
 namespace SharePointService.Controllers
 {
     public class UploadController : Controller
     {
+
+        private IConverterService converterService;
         private readonly Settings _settings;
         private readonly ILogger _logger;
         private GraphServiceClient client;
         //private FolderStructure _folderstructure;
         //private DataModel data;
-        public UploadController(IOptions<Settings> options, ILoggerFactory logFactory)
+        public UploadController(IConverterService converterService, IOptions<Settings> options, ILoggerFactory logFactory)
         {
+            this.converterService = converterService;
             _settings = options.Value;
             _logger = logFactory.CreateLogger<UploadController>();
             client = GraphClient(_settings.ClientId, _settings.ClientSecret, new[] { _settings.Scopes }, _settings.BaseUrl, _settings.TokenEndPoint);
@@ -98,6 +101,14 @@ namespace SharePointService.Controllers
             PdfResult result = new PdfResult();
             result.pdfBytes = String.Join(" ", intArray);
             var json = JsonConvert.SerializeObject(result);
+            return Content(json, "application/json");
+        }
+
+        [HttpPost]
+        public IActionResult TestInterop(string filePath, string fileExtension)
+        {
+            byte[] doc = System.IO.File.ReadAllBytes(filePath);
+            var json = this.converterService.ConvertToPdf(doc, fileExtension);
             return Content(json, "application/json");
         }
 

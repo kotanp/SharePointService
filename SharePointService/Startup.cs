@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SharePointService.Models;
+using SharePointService.Service;
 
 namespace SharePointService
 {
@@ -23,6 +24,7 @@ namespace SharePointService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddTransient<IConverterService, ConverterService>();
             services.AddControllersWithViews();
             var settings = Configuration.GetSection("Settings");
             services.Configure<Settings>(settings);
@@ -59,6 +61,10 @@ namespace SharePointService
                     name: "sharepointconvert",
                     pattern: "sharepoint/convert",
                     defaults: new { controller = "Upload", action = "ConvertToPdf" });
+                endpoints.MapControllerRoute(
+                    name: "sharepointinterop",
+                    pattern: "sharepoint/interop",
+                    defaults : new { controller = "Upload", action = "TestInterop" });
                 // endpoints.MapControllerRoute(
                 //     name: "pdfconvert",
                 //     pattern: "sharepoint/convert",
