@@ -89,7 +89,7 @@ namespace SharePointService.Controllers
                     {
                         new QueryOption("format", "pdf")
                     };
-
+            var name = client.Shares[sharedItemId].DriveItem.Request().GetAsync().GetAwaiter().GetResult();
             Stream driveItem = client.Shares[sharedItemId].DriveItem.Content.Request(queryOptions).GetAsync().GetAwaiter().GetResult();
             byte[] byteArray;
             using (var memoryStream = new MemoryStream())
@@ -97,10 +97,18 @@ namespace SharePointService.Controllers
                 driveItem.CopyTo(memoryStream);
                 byteArray = memoryStream.ToArray();
             }
-            var intArray = byteArray.Select(b => (int)b).ToArray();
+            var intArray = byteArray.Select(b => b).ToArray();
             PdfResult result = new PdfResult();
-            result.pdfBytes = String.Join(" ", intArray);
-            var json = JsonConvert.SerializeObject(result);
+            //result.pdfBytes = String.Join(" ", intArray);
+            string fileExtension;
+            if (!String.IsNullOrEmpty(name.Name))
+            {
+                fileExtension = name.Name.Substring(name.Name.IndexOf('.') + 1);
+            } else
+            {
+                throw new Exception("File extension cannot be extracted!");
+            }
+            var json = this.converterService.ConvertToPdf(byteArray, fileExtension);
             return Content(json, "application/json");
         }
 
