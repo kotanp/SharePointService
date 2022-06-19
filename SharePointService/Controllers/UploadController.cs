@@ -97,8 +97,8 @@ namespace SharePointService.Controllers
                 driveItem.CopyTo(memoryStream);
                 byteArray = memoryStream.ToArray();
             }
-            var intArray = byteArray.Select(b => b).ToArray();
-            PdfResult result = new PdfResult();
+            //var intArray = byteArray.Select(b => b).ToArray();
+            //PdfResult result = new PdfResult();
             //result.pdfBytes = String.Join(" ", intArray);
             string fileExtension;
             if (!String.IsNullOrEmpty(name.Name))
