@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using System.IO;
 using Newtonsoft.Json;
 using SharePointService.Service;
+using System.Net.Http;
 
 namespace SharePointService.Controllers
 {
@@ -90,13 +91,19 @@ namespace SharePointService.Controllers
                         new QueryOption("format", "pdf")
                     };
             var name = client.Shares[sharedItemId].DriveItem.Request().GetAsync().GetAwaiter().GetResult();
-            Stream driveItem = client.Shares[sharedItemId].DriveItem.Content.Request(queryOptions).GetAsync().GetAwaiter().GetResult();
-            byte[] byteArray;
-            using (var memoryStream = new MemoryStream())
-            {
-                driveItem.CopyTo(memoryStream);
-                byteArray = memoryStream.ToArray();
-            }
+            var requestUrl = $"{client.BaseUrl}/shares/{sharedItemId}/driveitem/content";
+            var message = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+            client.AuthenticationProvider.AuthenticateRequestAsync(message);
+            var response =  client.HttpProvider.SendAsync(message).GetAwaiter().GetResult();
+            byte[] downloadedByteArray =  response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+            //Stream driveItem = client.Shares[sharedItemId].DriveItem.Content.Request(queryOptions).GetAsync().GetAwaiter().GetResult();
+            //var items = client.Drives[sharedItemId].Items.Request();
+            //byte[] byteArray;
+            //using (var memoryStream = new MemoryStream())
+            //{
+            //    driveItem.CopyTo(memoryStream);
+            //    byteArray = memoryStream.ToArray();
+            //}
             //var intArray = byteArray.Select(b => b).ToArray();
             //PdfResult result = new PdfResult();
             //result.pdfBytes = String.Join(" ", intArray);
@@ -108,7 +115,7 @@ namespace SharePointService.Controllers
             {
                 throw new Exception("File extension cannot be extracted!");
             }
-            var json = this.converterService.ConvertToPdf(byteArray, fileExtension);
+            var json = this.converterService.ConvertToPdf(downloadedByteArray, fileExtension);
             return Content(json, "application/json");
         }
 
