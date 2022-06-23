@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.Office.Interop.Excel;
 using Microsoft.Office.Interop.Word;
 using Newtonsoft.Json;
+using SharePointService.Models;
 using _Application = Microsoft.Office.Interop.Word._Application;
 using Word = Microsoft.Office.Interop.Word;
 
@@ -44,8 +45,10 @@ namespace SharePointService.Service
             {
                 pdfBytes = ConvertXlsToPdf(docItem, newFileExtension);
             }
-
-            return JsonConvert.SerializeObject(pdfBytes);
+            //var intArray = pdfBytes.Select(b => (int)b).ToArray();
+            PdfResult result = new PdfResult{ pdfBytes= String.Join(" ", pdfBytes)};
+            //result.pdfBytes = String.Join(" ", intArray);
+            return JsonConvert.SerializeObject(result);
         }
 
         /*
