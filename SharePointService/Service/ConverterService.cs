@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using Microsoft.Office.Interop.Excel;
 using Microsoft.Office.Interop.Word;
 using Newtonsoft.Json;
@@ -12,6 +13,7 @@ namespace SharePointService.Service
 {
     public class ConverterService : IConverterService
     {
+        private readonly ILogger<ConverterService> _logger;
 
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         public static Random random = new Random();
@@ -22,13 +24,15 @@ namespace SharePointService.Service
         private object readOnly = true;
 
         private const string PDF_EXTENSTION = ".pdf";
-                                    
+
+        public ConverterService(ILogger<ConverterService> logger)
+        {
+            _logger = logger;
+        }
 
         public string ConvertToPdf(byte[] docItem, string fileExtension)
         {
-            /*            var tmpFile = Path.GetTempFileName();
-                        var tmpFileStream = File.OpenWrite(tmpFile);
-                        tmpFileStream.Write(docItem, 0, docItem.Length);*/
+            _logger.LogInformation("Starting the conversion now at {DT}\n", DateTime.UtcNow.ToString());
             string newFileExtension = fileExtension;
             if (!fileExtension.Contains("."))
             {
@@ -48,6 +52,7 @@ namespace SharePointService.Service
             //var intArray = pdfBytes.Select(b => (int)b).ToArray();
             PdfResult result = new PdfResult{ pdfBytes= String.Join(" ", pdfBytes)};
             //result.pdfBytes = String.Join(" ", intArray);
+            _logger.LogInformation("Whole procedure ended at {DT}\n", DateTime.UtcNow.ToString());
             return JsonConvert.SerializeObject(result);
         }
 
@@ -56,6 +61,10 @@ namespace SharePointService.Service
          */
         private byte[] ConvertDocToPDf(byte[] docItem, string newFileExtension)
         {
+            _logger.LogInformation("Docx coversion started!\n");
+            var timer = new System.Diagnostics.Stopwatch();
+            timer.Start();
+
             string tempFileName = CreateTempFile(newFileExtension, docItem);
 
             _Application _app = new Word.Application
@@ -81,6 +90,10 @@ namespace SharePointService.Service
 
             _app = null;
 
+            timer.Stop();
+            TimeSpan timeTaken = timer.Elapsed;
+
+            _logger.LogInformation("Conversion took {T}", timeTaken.ToString(@"m\:ss\.fff"));
             return pdfBytes;
         }
 
@@ -89,6 +102,10 @@ namespace SharePointService.Service
          */
         private byte[] ConvertXlsToPdf(byte[] docItem, string newFileExtension)
         {
+            _logger.LogInformation("Xls coversion started!\n");
+            var timer = new System.Diagnostics.Stopwatch();
+            timer.Start();
+
             string tempFileName = CreateTempFile(newFileExtension, docItem);
 
             Microsoft.Office.Interop.Excel.Application _app = new Microsoft.Office.Interop.Excel.Application {
@@ -110,6 +127,10 @@ namespace SharePointService.Service
 
             _app = null;
 
+            timer.Stop();
+            TimeSpan timeTaken = timer.Elapsed;
+
+            _logger.LogInformation("Conversion took {T}", timeTaken.ToString(@"m\:ss\.fff"));
             return pdfBytes;
 
         }
