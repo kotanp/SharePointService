@@ -32,7 +32,7 @@ namespace SharePointService.Service
 
         public string ConvertToPdf(byte[] docItem, string fileExtension)
         {
-            _logger.LogInformation("Starting the conversion now at {DT}\n", DateTime.UtcNow.ToString());
+            _logger.LogInformation("Starting the conversion now at {DT} \n", DateTime.UtcNow.ToString());
             string newFileExtension = fileExtension;
             if (!fileExtension.Contains("."))
             {
@@ -61,7 +61,7 @@ namespace SharePointService.Service
          */
         private byte[] ConvertDocToPDf(byte[] docItem, string newFileExtension)
         {
-            _logger.LogInformation("Docx coversion started!\n");
+            _logger.LogInformation("Docx coversion started! \n");
             var timer = new System.Diagnostics.Stopwatch();
             timer.Start();
 
@@ -102,7 +102,7 @@ namespace SharePointService.Service
          */
         private byte[] ConvertXlsToPdf(byte[] docItem, string newFileExtension)
         {
-            _logger.LogInformation("Xls coversion started!\n");
+            _logger.LogInformation("Xls coversion started! \n");
             var timer = new System.Diagnostics.Stopwatch();
             timer.Start();
 
@@ -130,7 +130,7 @@ namespace SharePointService.Service
             timer.Stop();
             TimeSpan timeTaken = timer.Elapsed;
 
-            _logger.LogInformation("Conversion took {T}", timeTaken.ToString(@"m\:ss\.fff"));
+            _logger.LogInformation("Conversion took {T} \n", timeTaken.ToString(@"m\:ss\.fff"));
             return pdfBytes;
 
         }
