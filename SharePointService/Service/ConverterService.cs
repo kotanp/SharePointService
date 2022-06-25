@@ -36,7 +36,7 @@ namespace SharePointService.Service
         {
             lock (converterLock)
             {
-                _logger.LogInformation("Starting the conversion now at {DT} \n", DateTime.UtcNow.ToString());
+                _logger.LogInformation("Starting the conversion now at {DT} \n", DateTime.Now.ToString());
                 string newFileExtension = fileExtension;
                 if (!fileExtension.Contains("."))
                 {
@@ -56,7 +56,7 @@ namespace SharePointService.Service
                 //var intArray = pdfBytes.Select(b => (int)b).ToArray();
                 PdfResult result = new PdfResult { pdfBytes = String.Join(" ", pdfBytes) };
                 //result.pdfBytes = String.Join(" ", intArray);
-                _logger.LogInformation("Whole procedure ended at {DT}\n", DateTime.UtcNow.ToString());
+                _logger.LogInformation("Whole procedure ended at {DT}\n", DateTime.Now.ToString());
                 return JsonConvert.SerializeObject(result);
             }
         }
