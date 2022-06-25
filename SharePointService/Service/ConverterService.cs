@@ -15,6 +15,8 @@ namespace SharePointService.Service
     {
         private readonly ILogger<ConverterService> _logger;
 
+        private readonly object converterLock = new object();
+
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         public static Random random = new Random();
 
@@ -32,28 +34,31 @@ namespace SharePointService.Service
 
         public string ConvertToPdf(byte[] docItem, string fileExtension)
         {
-            _logger.LogInformation("Starting the conversion now at {DT} \n", DateTime.UtcNow.ToString());
-            string newFileExtension = fileExtension;
-            if (!fileExtension.Contains("."))
+            lock (converterLock)
             {
-                newFileExtension = "." + fileExtension;
-            }
+                _logger.LogInformation("Starting the conversion now at {DT} \n", DateTime.UtcNow.ToString());
+                string newFileExtension = fileExtension;
+                if (!fileExtension.Contains("."))
+                {
+                    newFileExtension = "." + fileExtension;
+                }
 
-            byte[] pdfBytes = null;
-            if (fileExtension.Equals("docx") || fileExtension.Equals("doc") || fileExtension.Equals(".docx") || fileExtension.Equals(".doc"))
-            {
-                pdfBytes = ConvertDocToPDf(docItem, newFileExtension);
+                byte[] pdfBytes = null;
+                if (fileExtension.Equals("docx") || fileExtension.Equals("doc") || fileExtension.Equals(".docx") || fileExtension.Equals(".doc"))
+                {
+                    pdfBytes = ConvertDocToPDf(docItem, newFileExtension);
+                }
+                else if (fileExtension.Equals("xlsx") || fileExtension.Equals("xls") || fileExtension.Equals(".xlsx")
+                    || fileExtension.Equals(".xls"))
+                {
+                    pdfBytes = ConvertXlsToPdf(docItem, newFileExtension);
+                }
+                //var intArray = pdfBytes.Select(b => (int)b).ToArray();
+                PdfResult result = new PdfResult { pdfBytes = String.Join(" ", pdfBytes) };
+                //result.pdfBytes = String.Join(" ", intArray);
+                _logger.LogInformation("Whole procedure ended at {DT}\n", DateTime.UtcNow.ToString());
+                return JsonConvert.SerializeObject(result);
             }
-            else if (fileExtension.Equals("xlsx") || fileExtension.Equals("xls") || fileExtension.Equals(".xlsx")
-                || fileExtension.Equals(".xls"))
-            {
-                pdfBytes = ConvertXlsToPdf(docItem, newFileExtension);
-            }
-            //var intArray = pdfBytes.Select(b => (int)b).ToArray();
-            PdfResult result = new PdfResult{ pdfBytes= String.Join(" ", pdfBytes)};
-            //result.pdfBytes = String.Join(" ", intArray);
-            _logger.LogInformation("Whole procedure ended at {DT}\n", DateTime.UtcNow.ToString());
-            return JsonConvert.SerializeObject(result);
         }
 
         /*
