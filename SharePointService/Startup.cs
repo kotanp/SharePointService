@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using SharePointService.Models;
 using SharePointService.Service;
+using SharePointService.Utility;
 
 namespace SharePointService
 {
@@ -25,6 +26,7 @@ namespace SharePointService
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddTransient<IConverterService, ConverterService>();
+            services.AddTransient<ISharepointUtility, SharepointUtility>();
             services.AddControllersWithViews();
             var settings = Configuration.GetSection("Settings");
             services.Configure<Settings>(settings);

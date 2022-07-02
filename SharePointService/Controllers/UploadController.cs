@@ -13,6 +13,7 @@ using System.IO;
 using Newtonsoft.Json;
 using SharePointService.Service;
 using System.Net.Http;
+using SharePointService.Utility;
 
 namespace SharePointService.Controllers
 {
@@ -23,11 +24,12 @@ namespace SharePointService.Controllers
         private readonly Settings _settings;
         private readonly ILogger _logger;
         private GraphServiceClient client;
-        //private FolderStructure _folderstructure;
-        //private DataModel data;
-        public UploadController(IConverterService converterService, IOptions<Settings> options, ILoggerFactory logFactory)
+        private ISharepointUtility sharepointUtility;
+
+        public UploadController(IConverterService converterService, ISharepointUtility sharepointUtility,IOptions<Settings> options, ILoggerFactory logFactory)
         {
             this.converterService = converterService;
+            this.sharepointUtility = sharepointUtility;
             _settings = options.Value;
             _logger = logFactory.CreateLogger<UploadController>();
             client = GraphClient(_settings.ClientId, _settings.ClientSecret, new[] { _settings.Scopes }, _settings.BaseUrl, _settings.TokenEndPoint);
@@ -85,7 +87,8 @@ namespace SharePointService.Controllers
         [HttpGet]
         public IActionResult ConvertToPdf(string fileFullUrl)
         {
-            var sharedItemId = UrlToSharingToken(fileFullUrl);
+            SharepointItem sharepointItem = sharepointUtility.downloadSharepointItem(fileFullUrl, client, UrlToSharingToken(fileFullUrl));
+/*            var sharedItemId = UrlToSharingToken(fileFullUrl);
             var queryOptions = new List<QueryOption>()
                     {
                         new QueryOption("format", "pdf")
@@ -95,7 +98,7 @@ namespace SharePointService.Controllers
             var message = new HttpRequestMessage(HttpMethod.Get, requestUrl);
             client.AuthenticationProvider.AuthenticateRequestAsync(message);
             var response =  client.HttpProvider.SendAsync(message).GetAwaiter().GetResult();
-            byte[] downloadedByteArray =  response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+            byte[] downloadedByteArray =  response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();*/
             //Stream driveItem = client.Shares[sharedItemId].DriveItem.Content.Request(queryOptions).GetAsync().GetAwaiter().GetResult();
             //var items = client.Drives[sharedItemId].Items.Request();
             //byte[] byteArray;
@@ -108,14 +111,14 @@ namespace SharePointService.Controllers
             //PdfResult result = new PdfResult();
             //result.pdfBytes = String.Join(" ", intArray);
             string fileExtension;
-            if (!String.IsNullOrEmpty(name.Name))
+            if (!String.IsNullOrEmpty(sharepointItem.Name))
             {
-                fileExtension = name.Name.Substring(name.Name.IndexOf('.') + 1);
+                fileExtension = sharepointItem.Name.Substring(sharepointItem.Name.IndexOf('.') + 1);
             } else
             {
                 throw new Exception("File extension cannot be extracted!");
             }
-            var json = this.converterService.ConvertToPdf(downloadedByteArray, fileExtension);
+            var json = this.converterService.ConvertToPdf(sharepointItem.Data, fileExtension);
             return Content(json, "application/json");
         }
 

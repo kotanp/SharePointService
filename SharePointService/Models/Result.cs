@@ -13,8 +13,5 @@ namespace SharePointService.Models
 
         [JsonProperty(PropertyName = "sharingLinkRead")]
         public string SharingLinkRead { get; set; }
-
-        //[JsonProperty(PropertyName = "uuid")]
-        //public string UUID { get; set; }
     }
 }

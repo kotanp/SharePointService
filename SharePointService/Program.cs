@@ -15,7 +15,7 @@ namespace SharePointService
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                    webBuilder.ConfigureKestrel(o => { o.Limits.KeepAliveTimeout = System.TimeSpan.FromMinutes(10); });
+                    webBuilder.ConfigureKestrel(w => { w.Limits.KeepAliveTimeout = System.TimeSpan.FromMinutes(10); });
                 });
     }
 }
