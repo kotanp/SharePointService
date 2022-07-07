@@ -56,10 +56,46 @@ namespace SharePointService.Service
                 //var intArray = pdfBytes.Select(b => (int)b).ToArray();
                 PdfResult result = new PdfResult { pdfBytes = String.Join(" ", pdfBytes) };
                 //result.pdfBytes = String.Join(" ", intArray);
-                _logger.LogInformation("Whole procedure ended at {DT}\n", DateTime.Now.ToString());
+                _logger.LogInformation("Converter procedure ended at {DT}\n", DateTime.Now.ToString());
                 return JsonConvert.SerializeObject(result);
             }
         }
+
+
+        public string GetDocRevision(byte[]docItem, string fileExtension)
+        {
+            _logger.LogInformation("Starting the extraction of revision now at {DT} \n", DateTime.Now.ToString());
+            RevisionResult revisionResult = new RevisionResult();
+            string newFileExtension = fileExtension;
+            if (!fileExtension.Contains("."))
+            {
+                newFileExtension = "." + fileExtension;
+            }
+            string tempFileName = CreateTempFile(newFileExtension, docItem);
+
+            _Application _app = new Word.Application
+            {
+
+                // Make this instance of word invisible (Can still see it in the taskmgr).
+                Visible = false
+            };
+            _Document doc = _app.Documents.Open(tempFileName, ref oMissing, ref readOnly, ref oMissing, ref oMissing,
+            ref oMissing, ref oMissing, ref oMissing, ref oMissing, ref oMissing,
+            ref oMissing, ref isVisible, ref oMissing, ref oMissing, ref oMissing, ref oMissing);
+            doc.Activate();
+
+            revisionResult.RevisionCount = doc.Revisions.Count;
+
+            _app.Quit(ref oMissing, ref oMissing, ref oMissing);
+
+            File.Delete(tempFileName);
+
+            _app = null;
+
+            _logger.LogInformation("Extraction procedure ended at {DT}\n", DateTime.Now.ToString());
+            return JsonConvert.SerializeObject(revisionResult);
+        }
+
 
         /*
          * Converts the docx byte to pdf bytes

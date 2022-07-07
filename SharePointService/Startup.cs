@@ -65,12 +65,8 @@ namespace SharePointService
                     defaults: new { controller = "Upload", action = "ConvertToPdf" });
                 endpoints.MapControllerRoute(
                     name: "sharepointinterop",
-                    pattern: "sharepoint/interop",
-                    defaults : new { controller = "Upload", action = "TestInterop" });
-                // endpoints.MapControllerRoute(
-                //     name: "pdfconvert",
-                //     pattern: "sharepoint/convert",
-                //     defaults: new { controller = "PdfConverter", action = "Index" });
+                    pattern: "sharepoint/revision",
+                    defaults : new { controller = "Upload", action = "GetRevision" });
             });
         }
     }

@@ -88,28 +88,6 @@ namespace SharePointService.Controllers
         public IActionResult ConvertToPdf(string fileFullUrl)
         {
             SharepointItem sharepointItem = sharepointUtility.downloadSharepointItem(fileFullUrl, client, UrlToSharingToken(fileFullUrl));
-/*            var sharedItemId = UrlToSharingToken(fileFullUrl);
-            var queryOptions = new List<QueryOption>()
-                    {
-                        new QueryOption("format", "pdf")
-                    };
-            var name = client.Shares[sharedItemId].DriveItem.Request().GetAsync().GetAwaiter().GetResult();
-            var requestUrl = $"{client.BaseUrl}/shares/{sharedItemId}/driveitem/content";
-            var message = new HttpRequestMessage(HttpMethod.Get, requestUrl);
-            client.AuthenticationProvider.AuthenticateRequestAsync(message);
-            var response =  client.HttpProvider.SendAsync(message).GetAwaiter().GetResult();
-            byte[] downloadedByteArray =  response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();*/
-            //Stream driveItem = client.Shares[sharedItemId].DriveItem.Content.Request(queryOptions).GetAsync().GetAwaiter().GetResult();
-            //var items = client.Drives[sharedItemId].Items.Request();
-            //byte[] byteArray;
-            //using (var memoryStream = new MemoryStream())
-            //{
-            //    driveItem.CopyTo(memoryStream);
-            //    byteArray = memoryStream.ToArray();
-            //}
-            //var intArray = byteArray.Select(b => b).ToArray();
-            //PdfResult result = new PdfResult();
-            //result.pdfBytes = String.Join(" ", intArray);
             string fileExtension;
             if (!String.IsNullOrEmpty(sharepointItem.Name))
             {
@@ -122,11 +100,26 @@ namespace SharePointService.Controllers
             return Content(json, "application/json");
         }
 
-        [HttpPost]
-        public IActionResult TestInterop(string filePath, string fileExtension)
+        [HttpGet]
+        public IActionResult GetRevision(string fileFullUrl)
         {
-            byte[] doc = System.IO.File.ReadAllBytes(filePath);
-            var json = this.converterService.ConvertToPdf(doc, fileExtension);
+            SharepointItem sharepointItem = sharepointUtility.downloadSharepointItem(fileFullUrl, client, UrlToSharingToken(fileFullUrl));
+            string fileExtension;
+            if (!String.IsNullOrEmpty(sharepointItem.Name))
+            {
+                // TODO: Check Xlsx
+                fileExtension = sharepointItem.Name.Substring(sharepointItem.Name.IndexOf('.') + 1);
+                if (fileExtension.Equals("xlsx") || fileExtension.Equals("xls") || fileExtension.Equals(".xlsx")
+                    || fileExtension.Equals(".xls"))
+                {
+                    throw new Exception("Xlsx and xls formats are not supported!");
+                }
+            }
+            else
+            {
+                throw new Exception("File extension cannot be extracted!");
+            }
+            var json = this.converterService.GetDocRevision(sharepointItem.Data, fileExtension);
             return Content(json, "application/json");
         }
 
