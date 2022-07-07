@@ -86,6 +86,7 @@ namespace SharePointService.Service
 
             revisionResult.RevisionCount = doc.Revisions.Count;
 
+            doc.Close();
             _app.Quit(ref oMissing, ref oMissing, ref oMissing);
 
             File.Delete(tempFileName);
