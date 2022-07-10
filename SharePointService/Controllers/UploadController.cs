@@ -87,11 +87,11 @@ namespace SharePointService.Controllers
         [HttpGet]
         public IActionResult ConvertToPdf(string fileFullUrl)
         {
-            SharepointItem sharepointItem = sharepointUtility.downloadSharepointItem(fileFullUrl, client, UrlToSharingToken(fileFullUrl));
+            SharepointItem sharepointItem = sharepointUtility.DownloadSharepointItem(fileFullUrl, client, UrlToSharingToken(fileFullUrl));
             string fileExtension;
             if (!String.IsNullOrEmpty(sharepointItem.Name))
             {
-                fileExtension = sharepointItem.Name.Substring(sharepointItem.Name.IndexOf('.') + 1);
+                fileExtension = sharepointUtility.GetFileExtensionOfSharepointItem(sharepointItem);
             } else
             {
                 throw new Exception("File extension cannot be extracted!");
@@ -103,14 +103,12 @@ namespace SharePointService.Controllers
         [HttpGet]
         public IActionResult GetRevision(string fileFullUrl)
         {
-            SharepointItem sharepointItem = sharepointUtility.downloadSharepointItem(fileFullUrl, client, UrlToSharingToken(fileFullUrl));
+            SharepointItem sharepointItem = sharepointUtility.DownloadSharepointItem(fileFullUrl, client, UrlToSharingToken(fileFullUrl));
             string fileExtension;
             if (!String.IsNullOrEmpty(sharepointItem.Name))
             {
-                // TODO: Check Xlsx
-                fileExtension = sharepointItem.Name.Substring(sharepointItem.Name.IndexOf('.') + 1);
-                if (fileExtension.Equals("xlsx") || fileExtension.Equals("xls") || fileExtension.Equals(".xlsx")
-                    || fileExtension.Equals(".xls"))
+                fileExtension = sharepointUtility.GetFileExtensionOfSharepointItem(sharepointItem);
+                if (sharepointUtility.IsExtensionXlsx(fileExtension))
                 {
                     throw new Exception("Xlsx and xls formats are not supported!");
                 }

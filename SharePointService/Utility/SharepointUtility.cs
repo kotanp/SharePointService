@@ -7,7 +7,7 @@ namespace SharePointService.Utility
 {
     public class SharepointUtility : ISharepointUtility
     {
-        public SharepointItem downloadSharepointItem(string sharepointUrl, GraphServiceClient client, string sharedItemId)
+        public SharepointItem DownloadSharepointItem(string sharepointUrl, GraphServiceClient client, string sharedItemId)
         {
             SharepointItem sharepointItem = new SharepointItem();
             var queryOptions = new List<QueryOption>()
@@ -23,6 +23,21 @@ namespace SharePointService.Utility
             byte[] downloadedByteArray = response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
             sharepointItem.Data = downloadedByteArray;
             return sharepointItem;
+        }
+
+        public string GetFileExtensionOfSharepointItem(SharepointItem sharepointItem)
+        {
+            return sharepointItem.Name.Substring(sharepointItem.Name.IndexOf('.') + 1);
+        }
+
+        public bool IsExtensionDocx(string fileExtension)
+        {
+            return fileExtension.Equals("docx") || fileExtension.Equals("doc") || fileExtension.Equals(".docx") || fileExtension.Equals(".doc");
+        }
+
+        public bool IsExtensionXlsx(string fileExtension)
+        {
+            return fileExtension.Equals("xlsx") || fileExtension.Equals("xls") || fileExtension.Equals(".xlsx") || fileExtension.Equals(".xls");
         }
     }
 }

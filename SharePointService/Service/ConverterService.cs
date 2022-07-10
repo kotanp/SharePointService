@@ -6,6 +6,7 @@ using Microsoft.Office.Interop.Excel;
 using Microsoft.Office.Interop.Word;
 using Newtonsoft.Json;
 using SharePointService.Models;
+using SharePointService.Utility;
 using _Application = Microsoft.Office.Interop.Word._Application;
 using Word = Microsoft.Office.Interop.Word;
 
@@ -17,6 +18,8 @@ namespace SharePointService.Service
 
         private readonly object converterLock = new object();
 
+        private ISharepointUtility sharepointUtility; 
+
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         public static Random random = new Random();
 
@@ -27,9 +30,10 @@ namespace SharePointService.Service
 
         private const string PDF_EXTENSTION = ".pdf";
 
-        public ConverterService(ILogger<ConverterService> logger)
+        public ConverterService(ILogger<ConverterService> logger, ISharepointUtility sharepointUtility)
         {
             _logger = logger;
+            this.sharepointUtility = sharepointUtility;
         }
 
         public string ConvertToPdf(byte[] docItem, string fileExtension)
@@ -44,18 +48,15 @@ namespace SharePointService.Service
                 }
 
                 byte[] pdfBytes = null;
-                if (fileExtension.Equals("docx") || fileExtension.Equals("doc") || fileExtension.Equals(".docx") || fileExtension.Equals(".doc"))
+                if (sharepointUtility.IsExtensionDocx(fileExtension))
                 {
                     pdfBytes = ConvertDocToPDf(docItem, newFileExtension);
                 }
-                else if (fileExtension.Equals("xlsx") || fileExtension.Equals("xls") || fileExtension.Equals(".xlsx")
-                    || fileExtension.Equals(".xls"))
+                else if (sharepointUtility.IsExtensionXlsx(fileExtension))
                 {
                     pdfBytes = ConvertXlsToPdf(docItem, newFileExtension);
                 }
-                //var intArray = pdfBytes.Select(b => (int)b).ToArray();
                 PdfResult result = new PdfResult { pdfBytes = String.Join(" ", pdfBytes) };
-                //result.pdfBytes = String.Join(" ", intArray);
                 _logger.LogInformation("Converter procedure ended at {DT}\n", DateTime.Now.ToString());
                 return JsonConvert.SerializeObject(result);
             }
