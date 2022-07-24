@@ -35,7 +35,7 @@ namespace SharePointService.Controllers
             client = GraphClient(_settings.ClientId, _settings.ClientSecret, new[] { _settings.Scopes }, _settings.BaseUrl, _settings.TokenEndPoint);
         }
         [HttpPost]
-        public async Task<IActionResult> Index(string originalFileName, string filePath, string uuid)
+        public IActionResult Index(string originalFileName, string filePath, string uuid)
         {
             // string baseUrl = _settings.BaseUrl;
             // var clientId = _settings.ClientId;
@@ -46,7 +46,7 @@ namespace SharePointService.Controllers
             string siteUrl = _settings.SiteUrl;
             // GraphServiceClient client = GraphClient(clientId, clientSecret, scopes, baseUrl, tokenEndpoint);
             var idCollection = client.Sites.Request().GetAsync().GetAwaiter().GetResult();
-            var siteId = idCollection.Where(x => x.WebUrl == siteUrl).FirstOrDefault().Id;
+            var siteId = idCollection.FirstOrDefault(x => x.WebUrl == siteUrl)?.Id;
             string[] strucutre = filePath.Split('/');
             string filename = originalFileName;
             string itempath = "";
@@ -163,7 +163,7 @@ namespace SharePointService.Controllers
         }
 
 
-        private static async void UploadFile(GraphServiceClient client, string siteid, ILogger logger, byte[] byteArray, string listname, string itempath, string filename, string uuid)
+        private static void UploadFile(GraphServiceClient client, string siteid, ILogger logger, byte[] byteArray, string listname, string itempath, string filename, string uuid)
         {
             var drives = client.Sites[siteid].Drives.Request().GetAsync().GetAwaiter().GetResult();
             var driveId = drives.FirstOrDefault(x => x.Name == listname)?.Id;;
