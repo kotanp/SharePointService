@@ -35,7 +35,7 @@ namespace SharePointService.Controllers
             client = GraphClient(_settings.ClientId, _settings.ClientSecret, new[] { _settings.Scopes }, _settings.BaseUrl, _settings.TokenEndPoint);
         }
         [HttpPost]
-        public IActionResult Index(string originalFileName, string filePath, string uuid)
+        public async Task<IActionResult> Index(string originalFileName, string filePath, string uuid)
         {
             // string baseUrl = _settings.BaseUrl;
             // var clientId = _settings.ClientId;
@@ -60,7 +60,7 @@ namespace SharePointService.Controllers
                 Request.Body.CopyToAsync(stream).GetAwaiter().GetResult();
                 byteArray = stream.ToArray();
             }
-            CreateFolder(client, siteId, _logger, strucutre[3]).Wait(TimeSpan.FromSeconds(1));
+            CreateFolder(client, siteId, _logger, strucutre[3]).Wait(TimeSpan.FromSeconds(10));
             UploadFile(client, siteId, _logger, byteArray, strucutre[3], itempath.Substring(1), filename, uuid);
             var links = CreateOrganizationSharingLink(client, siteId, strucutre[3], itempath, filename);
             //string sharinglink = link.Result;
@@ -163,27 +163,37 @@ namespace SharePointService.Controllers
         }
 
 
-        public static async void UploadFile(GraphServiceClient client, string siteid, ILogger logger, byte[] byteArray, string listname, string itempath, string filename, string uuid)
+        private static async void UploadFile(GraphServiceClient client, string siteid, ILogger logger, byte[] byteArray, string listname, string itempath, string filename, string uuid)
         {
             var drives = client.Sites[siteid].Drives.Request().GetAsync().GetAwaiter().GetResult();
-            var driveId = drives.Where(x => x.Name == listname).FirstOrDefault().Id;;
+            var driveId = drives.FirstOrDefault(x => x.Name == listname)?.Id;;
             var stream = new MemoryStream(byteArray);
-            try
+            if (!String.IsNullOrEmpty(driveId))
             {
-                await client.Sites[siteid].Drives[driveId].Root.ItemWithPath(itempath + "/" + filename).Content.Request().PutAsync<DriveItem>(stream);
-            }
-            catch (ServiceException se)
-            {
-                logger.LogInformation("File feltöltési hiba: {0}", se);
-            }
-            var fieldValueSet = new FieldValueSet
-            {
-                AdditionalData = new Dictionary<string, object>()
+                try
                 {
-                    {"UUID", uuid}
+                    client.Sites[siteid].Drives[driveId].Root.ItemWithPath(itempath + "/" + filename).Content.Request().PutAsync<DriveItem>(stream).Wait(5000);
                 }
-            };
-            await client.Sites[siteid].Drives[driveId].Root.ItemWithPath(itempath + "/" + filename).ListItem.Fields.Request().UpdateAsync(fieldValueSet);
+                catch (Exception se)
+                {
+                    logger.LogInformation("File feltöltési hiba: {0}", se);
+                }
+                var fieldValueSet = new FieldValueSet
+                {
+                    AdditionalData = new Dictionary<string, object>()
+                    {
+                        {"UUID", uuid}
+                    }
+                };
+                try
+                {
+                    client.Sites[siteid].Drives[driveId].Root.ItemWithPath(itempath + "/" + filename).ListItem.Fields.Request().UpdateAsync(fieldValueSet).Wait(5000);   
+                }
+                catch (Exception e)
+                {
+                    logger.LogInformation("File paraméter frissítési hiba: {0}", e);
+                }
+            }
         }
 
 
@@ -224,20 +234,20 @@ namespace SharePointService.Controllers
             }
         }
 
-        public static async Task<List<string>> CreateOrganizationSharingLink(GraphServiceClient client, string siteid, string listname, string itempath, string filename)
+        private static async Task<List<string>> CreateOrganizationSharingLink(GraphServiceClient client, string siteid, string listname, string itempath, string filename)
         {
             List<string> sharingLinks = new List<string>();
             var drives = client.Sites[siteid].Drives.Request().GetAsync().GetAwaiter().GetResult();
-            var driveId = drives.Where(x => x.Name == listname).FirstOrDefault().Id;
+            var driveId = drives.FirstOrDefault(x => x.Name == listname)?.Id;
             var fileid = client.Sites[siteid].Drives[driveId].Items["root:" + itempath + ":"].Children.Request().Filter($"name eq '" + filename + "'").GetAsync().GetAwaiter().GetResult().Select(x => x.Id).FirstOrDefault();
             //var fileid = fileids.Where(x => x.Name == "teszt.docx").Select(x => x.Id).FirstOrDefault();
             var type = "edit";
             var scope = "organization";
             //var shareinglink = client.Sites[siteid].Drives[driveId].Items[fileid].CreateLink(type, scope, null, null, null).Request().PostAsync().GetAwaiter().GetResult();
-            var shareinglinkEdit = await client.Sites[siteid].Drives[driveId].Items[fileid].CreateLink(type, scope, null, null, null).Request().PostAsync();
+            var shareinglinkEdit =  client.Sites[siteid].Drives[driveId].Items[fileid].CreateLink(type, scope, null, null, null).Request().PostAsync().GetAwaiter().GetResult();
             sharingLinks.Add(shareinglinkEdit.Link.WebUrl);
             type = "view";
-            var shareinglinkView = await client.Sites[siteid].Drives[driveId].Items[fileid].CreateLink(type, scope, null, null, null).Request().PostAsync();
+            var shareinglinkView = client.Sites[siteid].Drives[driveId].Items[fileid].CreateLink(type, scope, null, null, null).Request().PostAsync().GetAwaiter().GetResult();
             sharingLinks.Add(shareinglinkView.Link.WebUrl);
             return sharingLinks;
         }
